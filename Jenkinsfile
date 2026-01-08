@@ -8,7 +8,7 @@ pipeline {
   parameters {
     choice(name: 'ENV', choices: ['dev', 'stage', 'prod'], description: 'Environment')
     choice(name: 'ACTION', choices: ['plan', 'apply', 'destroy'], description: 'Terraform action')
-    string(name: 'AWS_REGION', defaultValue: 'us-east-1', description: 'AWS region')
+    string(name: 'AWS_REGION', defaultValue: 'ap-south-1', description: 'AWS region')
   }
 
   environment {

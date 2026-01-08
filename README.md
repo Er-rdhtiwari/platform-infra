@@ -20,7 +20,7 @@ Production-style AWS infrastructure repo that provisions VPC networking, ECR rep
 ```bash
 ./scripts/bootstrap_tf_backend.sh \
   --bucket rdhcloudresource-org-terraform-state \
-  --region us-east-1 \
+  --region ap-south-1 \
   --table rdhcloudresource-org-terraform-locks \
   --env dev
 ```
@@ -30,9 +30,9 @@ Optional KMS:
 ```bash
 ./scripts/bootstrap_tf_backend.sh \
   --bucket rdhcloudresource-org-terraform-state \
-  --region us-east-1 \
+  --region ap-south-1 \
   --table rdhcloudresource-org-terraform-locks \
-  --kms-key-id arn:aws:kms:us-east-1:123456789012:key/abcd-1234 \
+  --kms-key-id arn:aws:kms:ap-south-1:123456789012:key/abcd-1234 \
   --env dev
 ```
 
@@ -42,7 +42,7 @@ Optional KMS:
 terraform -chdir=envs/dev init \
   -backend-config="bucket=rdhcloudresource-org-terraform-state" \
   -backend-config="key=platform-infra/dev/terraform.tfstate" \
-  -backend-config="region=us-east-1" \
+  -backend-config="region=ap-south-1" \
   -backend-config="dynamodb_table=rdhcloudresource-org-terraform-locks" \
   -backend-config="encrypt=true"
 ```
@@ -62,7 +62,7 @@ Keep `terraform.tfvars` out of version control (see `.gitignore`).
 terraform -chdir=envs/dev init \
   -backend-config="bucket=rdhcloudresource-org-terraform-state" \
   -backend-config="key=platform-infra/dev/terraform.tfstate" \
-  -backend-config="region=us-east-1" \
+  -backend-config="region=ap-south-1" \
   -backend-config="dynamodb_table=rdhcloudresource-org-terraform-locks" \
   -backend-config="encrypt=true"
 ```
@@ -70,7 +70,7 @@ terraform -chdir=envs/dev init \
 3) Validate your environment and tools:
 
 ```bash
-./scripts/validate_env.sh --env dev --action plan --region us-east-1
+./scripts/validate_env.sh --env dev --action plan --region ap-south-1
 ```
 
 4) Run plan:
@@ -107,7 +107,7 @@ Jenkins environment variables (defaults shown):
 Example Jenkins run:
 - `ENV=stage`
 - `ACTION=apply`
-- `AWS_REGION=us-east-1`
+- `AWS_REGION=ap-south-1`
 
 ## Runbooks
 These runbooks make the repository the source of truth for your permanent Jenkins server, with auditable plan/apply flows and centralized remote state/locking.
@@ -117,7 +117,7 @@ Use this when you want to test or apply changes directly from your workstation.
 1) Validate tools and inputs:
 
 ```bash
-./scripts/validate_env.sh --env dev --action plan --region us-east-1
+./scripts/validate_env.sh --env dev --action plan --region ap-south-1
 ```
 
 2) Initialize the backend (or use `-backend=false` for a dry-run validation):
@@ -126,7 +126,7 @@ Use this when you want to test or apply changes directly from your workstation.
 terraform -chdir=envs/dev init \
   -backend-config="bucket=rdhcloudresource-org-terraform-state" \
   -backend-config="key=platform-infra/dev/terraform.tfstate" \
-  -backend-config="region=us-east-1" \
+  -backend-config="region=ap-south-1" \
   -backend-config="dynamodb_table=rdhcloudresource-org-terraform-locks" \
   -backend-config="encrypt=true"
 ```

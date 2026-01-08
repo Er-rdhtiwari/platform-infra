@@ -326,6 +326,7 @@ ensure_exec_wrapper() {
 from pathlib import Path
 
 path = Path(r"$file")
+wrapper = "$wrapper"
 data = path.read_text()
 lines = data.splitlines()
 out = []
@@ -351,7 +352,7 @@ for line in lines:
     if in_exec and stripped.startswith("command:"):
         value = stripped.split("command:", 1)[1].strip()
         if value == "aws":
-            line = " " * (exec_indent + 2) + f"command: {r\"$wrapper\"}"
+            line = " " * (exec_indent + 2) + "command: " + wrapper
 
     out.append(line)
 

@@ -193,6 +193,35 @@ Use this for ongoing changes, rollouts, and incident response.
 
 Checkpoint: use Terraform outputs to configure platform-addons and app pipelines.
 
+### Runbook 4: Cluster validation + demo access
+Use this after `apply` to validate the cluster and confirm web access.
+1) Validate cluster health:
+
+```bash
+aws eks describe-cluster --name <cluster> --region <region> --query "cluster.status"
+aws eks list-nodegroups --cluster-name <cluster> --region <region>
+kubectl get nodes -o wide
+kubectl -n kube-system get pods
+kubectl get svc -A
+```
+
+2) Create a demo web deployment and expose it:
+
+```bash
+kubectl create deployment web --image=nginx
+kubectl expose deployment web --type=LoadBalancer --port=80
+kubectl get svc web -w
+```
+
+Open the `EXTERNAL-IP` DNS name in your browser once it appears.
+
+3) Clean up the demo resources:
+
+```bash
+kubectl delete svc web
+kubectl delete deployment web
+```
+
 ## Outputs (for platform-addons and apps)
 After apply, these outputs are available:
 - `cluster_name`

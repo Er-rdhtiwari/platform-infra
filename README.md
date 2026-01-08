@@ -234,6 +234,7 @@ Use the Terraform outputs when configuring the platform-addons repo (cluster nam
 - `exec plugin: invalid apiVersion "client.authentication.k8s.io/v1alpha1"`: run `./scripts/eks_kubeconfig.sh --env dev` to upgrade the kubeconfig exec apiVersion.
 - `interactiveMode must be specified`: run `./scripts/eks_kubeconfig.sh --env dev` to add the exec `interactiveMode` field required by newer kubectl clients.
 - `no kind "ExecCredential" ... v1alpha1`: run `./scripts/eks_kubeconfig.sh --env dev` to switch kubeconfig to the wrapper that normalizes exec output to v1.
+- `Failed to parse JSON from aws output`: check AWS credentials and run `aws sts get-caller-identity` and `aws eks get-token --cluster-name <name> --region <region> --output json`.
 - `kubectl` timeouts: if the cluster endpoint is private, run kubectl from inside the VPC/VPN or enable public access with restricted CIDRs.
 - `Node group failed to join`: confirm subnets are private and have NAT or required VPC endpoints.
 - `VPC endpoint not supported`: disable STS endpoint via `enable_sts_endpoint = false` for unsupported regions.

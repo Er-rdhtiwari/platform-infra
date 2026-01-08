@@ -14,6 +14,8 @@ pipeline {
   environment {
     ENV = "${params.ENV}"
     AWS_REGION = "${params.AWS_REGION}"
+    AWS_DEFAULT_REGION = "${params.AWS_REGION}"
+    AWS_PAGER = ""
     TF_IN_AUTOMATION = "1"
     TF_INPUT = "false"
     TF_VAR_aws_region = "${params.AWS_REGION}"
@@ -32,7 +34,7 @@ pipeline {
 
     stage('awsIdentityCheck') {
       steps {
-        sh 'aws sts get-caller-identity'
+        sh 'aws sts get-caller-identity --region $AWS_REGION'
       }
     }
 

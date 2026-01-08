@@ -178,4 +178,127 @@ PY
 
 update_kubeconfig_api_version "$api_version" "$kubeconfig_path"
 
-echo "Updated kubeconfig exec apiVersion to ${api_version} in ${kubeconfig_path}."
+ensure_interactive_mode() {
+  local file="$1"
+
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - <<PY
+from pathlib import Path
+
+path = Path(r"$file")
+data = path.read_text()
+lines = data.splitlines()
+out = []
+
+def indent_len(line: str) -> int:
+    return len(line) - len(line.lstrip(" "))
+
+in_exec = False
+exec_indent = 0
+has_interactive = False
+command_aws = False
+
+def insert_interactive():
+    if command_aws and not has_interactive:
+        out.append(" " * (exec_indent + 2) + "interactiveMode: IfAvailable")
+
+for line in lines:
+    stripped = line.lstrip()
+    if in_exec and stripped and indent_len(line) <= exec_indent:
+        insert_interactive()
+        in_exec = False
+        exec_indent = 0
+        has_interactive = False
+        command_aws = False
+
+    if not in_exec and stripped.startswith("exec:"):
+        in_exec = True
+        exec_indent = indent_len(line)
+        has_interactive = False
+        command_aws = False
+        out.append(line)
+        continue
+
+    if in_exec:
+        if stripped.startswith("interactiveMode:"):
+            has_interactive = True
+        if stripped.startswith("command:"):
+            value = stripped.split("command:", 1)[1].strip()
+            if value == "aws":
+                command_aws = True
+
+    out.append(line)
+
+if in_exec:
+    insert_interactive()
+
+path.write_text("\\n".join(out) + ("\\n" if data.endswith("\\n") else ""))
+PY
+    return 0
+  fi
+
+  if command -v perl >/dev/null 2>&1; then
+    perl - <<'PERL' "$file"
+use strict;
+use warnings;
+
+my $file = shift;
+open my $fh, '<', $file or die "Unable to read $file: $!";
+my @lines = <$fh>;
+close $fh;
+
+my @out;
+my ($in_exec, $exec_indent, $has_interactive, $command_aws) = (0, 0, 0, 0);
+
+sub insert_interactive {
+  if ($command_aws && !$has_interactive) {
+    push @out, (' ' x ($exec_indent + 2)) . "interactiveMode: IfAvailable\n";
+  }
+}
+
+foreach my $line (@lines) {
+  my ($indent) = ($line =~ /^(\s*)/);
+  my $indent_len = length($indent);
+  (my $stripped = $line) =~ s/^\s+//;
+  chomp $stripped;
+
+  if ($in_exec && $stripped ne '' && $indent_len <= $exec_indent) {
+    insert_interactive();
+    ($in_exec, $exec_indent, $has_interactive, $command_aws) = (0, 0, 0, 0);
+  }
+
+  if (!$in_exec && $line =~ /^\s*exec:\s*$/) {
+    $in_exec = 1;
+    $exec_indent = $indent_len;
+    $has_interactive = 0;
+    $command_aws = 0;
+    push @out, $line;
+    next;
+  }
+
+  if ($in_exec) {
+    $has_interactive = 1 if $line =~ /^\s*interactiveMode:\s*/;
+    if ($line =~ /^\s*command:\s*(\S+)\s*$/) {
+      $command_aws = 1 if $1 eq 'aws';
+    }
+  }
+
+  push @out, $line;
+}
+
+insert_interactive() if $in_exec;
+
+open my $fh_out, '>', $file or die "Unable to write $file: $!";
+print $fh_out @out;
+close $fh_out;
+PERL
+    return 0
+  fi
+
+  echo "Neither python3 nor perl is available to update kubeconfig."
+  exit 1
+}
+
+ensure_interactive_mode "$kubeconfig_path"
+
+echo "Updated kubeconfig exec apiVersion to ${api_version} and ensured interactiveMode in ${kubeconfig_path}."

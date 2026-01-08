@@ -159,6 +159,23 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+tfplan
+*.tfplan
+.terraformrc
+terraform.rc
+
 # Pyre type checker
 .pyre/
 

@@ -1,0 +1,34 @@
+aws_region = "us-east-1"
+environment = "dev"
+project_name = "platform"
+
+vpc_cidr = "10.10.0.0/16"
+az_count = 2
+nat_gateway_count = 1
+subnet_bits = 4
+enable_sts_endpoint = true
+
+ecr_repositories = ["platform/api", "platform/web"]
+ecr_scan_on_push = true
+ecr_lifecycle_keep_last = 30
+
+eks_cluster_name = "platform-dev"
+kubernetes_version = "1.29"
+endpoint_private_access = true
+endpoint_public_access = true
+public_access_cidrs = ["0.0.0.0/0"]
+
+node_instance_types = ["t3.medium"]
+node_min_size = 1
+node_max_size = 3
+node_desired_size = 1
+node_disk_size = 20
+node_capacity_type = "ON_DEMAND"
+
+enable_irsa = true
+oidc_thumbprint = "9e99a48a9960b14926bb7f3b02e22da0c0f8f9a1"
+
+tags = {
+  Owner      = "platform-team"
+  CostCenter = "cc-1234"
+}

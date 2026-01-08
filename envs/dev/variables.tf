@@ -103,7 +103,7 @@ variable "public_access_cidrs" {
 variable "node_instance_types" {
   type        = list(string)
   description = "Node instance types."
-  default     = ["t3.medium"]
+  default     = ["t3.2xlarge"]
 }
 
 variable "node_min_size" {

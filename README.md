@@ -19,9 +19,9 @@ Production-style AWS infrastructure repo that provisions VPC networking, ECR rep
 
 ```bash
 ./scripts/bootstrap_tf_backend.sh \
-  --bucket my-org-terraform-state \
+  --bucket rdhcloudresource-org-terraform-state \
   --region us-east-1 \
-  --table my-org-terraform-locks \
+  --table rdhcloudresource-org-terraform-locks \
   --env dev
 ```
 
@@ -29,9 +29,9 @@ Optional KMS:
 
 ```bash
 ./scripts/bootstrap_tf_backend.sh \
-  --bucket my-org-terraform-state \
+  --bucket rdhcloudresource-org-terraform-state \
   --region us-east-1 \
-  --table my-org-terraform-locks \
+  --table rdhcloudresource-org-terraform-locks \
   --kms-key-id arn:aws:kms:us-east-1:123456789012:key/abcd-1234 \
   --env dev
 ```
@@ -40,10 +40,10 @@ Optional KMS:
 
 ```bash
 terraform -chdir=envs/dev init \
-  -backend-config="bucket=my-org-terraform-state" \
+  -backend-config="bucket=rdhcloudresource-org-terraform-state" \
   -backend-config="key=platform-infra/dev/terraform.tfstate" \
   -backend-config="region=us-east-1" \
-  -backend-config="dynamodb_table=my-org-terraform-locks" \
+  -backend-config="dynamodb_table=rdhcloudresource-org-terraform-locks" \
   -backend-config="encrypt=true"
 ```
 
@@ -60,10 +60,10 @@ Keep `terraform.tfvars` out of version control (see `.gitignore`).
 
 ```bash
 terraform -chdir=envs/dev init \
-  -backend-config="bucket=my-org-terraform-state" \
+  -backend-config="bucket=rdhcloudresource-org-terraform-state" \
   -backend-config="key=platform-infra/dev/terraform.tfstate" \
   -backend-config="region=us-east-1" \
-  -backend-config="dynamodb_table=my-org-terraform-locks" \
+  -backend-config="dynamodb_table=rdhcloudresource-org-terraform-locks" \
   -backend-config="encrypt=true"
 ```
 
@@ -99,9 +99,9 @@ Required Jenkins parameters:
 - `ACTION` (plan|apply|destroy)
 - `AWS_REGION`
 
-Required Jenkins environment variables:
-- `TF_STATE_BUCKET` (S3 bucket)
-- `TF_STATE_DDB_TABLE` (DynamoDB lock table)
+Jenkins environment variables (defaults shown):
+- `TF_STATE_BUCKET` (S3 bucket, default: `rdhcloudresource-org-terraform-state`)
+- `TF_STATE_DDB_TABLE` (DynamoDB lock table, default: `rdhcloudresource-org-terraform-locks`)
 - `TF_STATE_KMS_KEY_ID` (optional, KMS key for encryption)
 
 Example Jenkins run:
@@ -124,10 +124,10 @@ Use this when you want to test or apply changes directly from your workstation.
 
 ```bash
 terraform -chdir=envs/dev init \
-  -backend-config="bucket=my-org-terraform-state" \
+  -backend-config="bucket=rdhcloudresource-org-terraform-state" \
   -backend-config="key=platform-infra/dev/terraform.tfstate" \
   -backend-config="region=us-east-1" \
-  -backend-config="dynamodb_table=my-org-terraform-locks" \
+  -backend-config="dynamodb_table=rdhcloudresource-org-terraform-locks" \
   -backend-config="encrypt=true"
 ```
 

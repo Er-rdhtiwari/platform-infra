@@ -39,16 +39,22 @@ pipeline {
     stage('terraform init/fmt/validate') {
       steps {
         script {
-          if (!env.TF_STATE_BUCKET?.trim()) {
-            error('TF_STATE_BUCKET is required (set as Jenkins env var or with credentials binding).')
+          def stateBucket = env.TF_STATE_BUCKET?.trim()
+          if (!stateBucket) {
+            stateBucket = 'rdhcloudresource-org-terraform-state'
+            env.TF_STATE_BUCKET = stateBucket
           }
-          if (!env.TF_STATE_DDB_TABLE?.trim()) {
-            error('TF_STATE_DDB_TABLE is required (set as Jenkins env var or with credentials binding).')
+
+          def lockTable = env.TF_STATE_DDB_TABLE?.trim()
+          if (!lockTable) {
+            lockTable = 'rdhcloudresource-org-terraform-locks'
+            env.TF_STATE_DDB_TABLE = lockTable
           }
-          def backendArgs = "-backend-config=bucket=${env.TF_STATE_BUCKET} " +
+
+          def backendArgs = "-backend-config=bucket=${stateBucket} " +
             "-backend-config=key=platform-infra/${params.ENV}/terraform.tfstate " +
             "-backend-config=region=${params.AWS_REGION} " +
-            "-backend-config=dynamodb_table=${env.TF_STATE_DDB_TABLE} " +
+            "-backend-config=dynamodb_table=${lockTable} " +
             "-backend-config=encrypt=true"
 
           if (env.TF_STATE_KMS_KEY_ID?.trim()) {

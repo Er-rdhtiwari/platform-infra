@@ -18,7 +18,7 @@ endpoint_private_access = true
 endpoint_public_access = false
 public_access_cidrs = ["203.0.113.0/24"]
 
-node_instance_types = ["m5.large"]
+node_instance_types = ["t3.2xlarge"]
 node_min_size = 3
 node_max_size = 10
 node_desired_size = 3

@@ -105,7 +105,7 @@ variable "public_access_cidrs" {
 variable "node_instance_types" {
   type        = list(string)
   description = "EC2 instance types for the managed node group."
-  default     = ["t3.medium"]
+  default     = ["t3.2xlarge"]
 }
 
 variable "node_min_size" {

@@ -3,12 +3,12 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-Usage: bootstrap_tf_backend.sh --bucket <name> --region <region> --table <dynamodb_table> [options]
+Usage: bootstrap_tf_backend.sh --region <region> [options]
 
 Options:
-  --bucket        S3 bucket name for Terraform state.
+  --bucket        S3 bucket name for Terraform state (default: rdhcloudresource-org-terraform-state).
   --region        AWS region for the bucket and DynamoDB table.
-  --table         DynamoDB table name for state locking.
+  --table         DynamoDB table name for state locking (default: rdhcloudresource-org-terraform-locks).
   --kms-key-id    Optional KMS key ID/ARN for S3 and DynamoDB encryption.
   --profile       Optional AWS CLI profile name.
   --env           Optional environment name (dev|stage|prod) used in output examples.
@@ -17,9 +17,9 @@ Options:
 USAGE
 }
 
-bucket=""
+bucket="rdhcloudresource-org-terraform-state"
 region=""
-table=""
+table="rdhcloudresource-org-terraform-locks"
 kms_key_id=""
 profile=""
 env_name=""
@@ -67,8 +67,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "$bucket" || -z "$region" || -z "$table" ]]; then
-  echo "Missing required arguments."
+if [[ -z "$region" ]]; then
+  echo "Missing required argument: --region."
   usage
   exit 1
 fi

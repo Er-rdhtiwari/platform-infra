@@ -14,6 +14,7 @@ Production-style AWS infrastructure repo that provisions VPC networking, ECR rep
 - `scripts/bootstrap_tf_backend.sh`: bootstrap S3 + DynamoDB backend
 - `scripts/validate_env.sh`: sanity checks for inputs and tools
 - `scripts/eks_kubeconfig.sh`: update kubeconfig and fix exec apiVersion for kubectl
+- `scripts/eks_exec_credential.sh`: wrapper to normalize EKS exec auth output
 
 ## Bootstrap remote state (S3 + DynamoDB + optional KMS)
 1) Create the backend resources:
@@ -232,6 +233,7 @@ Use the Terraform outputs when configuring the platform-addons repo (cluster nam
 - `EKS cluster not reachable`: check endpoint access flags and security group rules; verify your public IP is allowed.
 - `exec plugin: invalid apiVersion "client.authentication.k8s.io/v1alpha1"`: run `./scripts/eks_kubeconfig.sh --env dev` to upgrade the kubeconfig exec apiVersion.
 - `interactiveMode must be specified`: run `./scripts/eks_kubeconfig.sh --env dev` to add the exec `interactiveMode` field required by newer kubectl clients.
+- `no kind "ExecCredential" ... v1alpha1`: run `./scripts/eks_kubeconfig.sh --env dev` to switch kubeconfig to the wrapper that normalizes exec output to v1.
 - `kubectl` timeouts: if the cluster endpoint is private, run kubectl from inside the VPC/VPN or enable public access with restricted CIDRs.
 - `Node group failed to join`: confirm subnets are private and have NAT or required VPC endpoints.
 - `VPC endpoint not supported`: disable STS endpoint via `enable_sts_endpoint = false` for unsupported regions.

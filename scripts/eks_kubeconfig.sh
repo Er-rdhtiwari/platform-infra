@@ -12,9 +12,13 @@ Options:
   --kubeconfig       Path to kubeconfig file (default: ~/.kube/config or $KUBECONFIG).
   --profile          Optional AWS CLI profile name.
   --force-api-version  Force exec apiVersion (v1, v1beta1, v1alpha1).
+  --no-wrapper       Do not replace exec command with the repo wrapper.
   -h, --help         Show this help.
 USAGE
 }
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+wrapper_path="${script_dir}/eks_exec_credential.sh"
 
 env_name=""
 cluster_name=""
@@ -22,6 +26,7 @@ region=""
 profile=""
 force_api_version=""
 kubeconfig_path="${KUBECONFIG:-$HOME/.kube/config}"
+use_wrapper="true"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -48,6 +53,10 @@ while [[ $# -gt 0 ]]; do
     --force-api-version)
       force_api_version="$2"
       shift 2
+      ;;
+    --no-wrapper)
+      use_wrapper="false"
+      shift 1
       ;;
     -h|--help)
       usage
@@ -180,6 +189,7 @@ update_kubeconfig_api_version "$api_version" "$kubeconfig_path"
 
 ensure_interactive_mode() {
   local file="$1"
+  local wrapper="$2"
 
   if command -v python3 >/dev/null 2>&1; then
     python3 - <<PY
@@ -224,7 +234,7 @@ for line in lines:
             has_interactive = True
         if stripped.startswith("command:"):
             value = stripped.split("command:", 1)[1].strip()
-            if value == "aws":
+            if value == "aws" or value == r"$wrapper":
                 command_aws = True
 
     out.append(line)
@@ -238,11 +248,12 @@ PY
   fi
 
   if command -v perl >/dev/null 2>&1; then
-    perl - <<'PERL' "$file"
+    perl - <<'PERL' "$file" "$wrapper"
 use strict;
 use warnings;
 
 my $file = shift;
+my $wrapper = shift;
 open my $fh, '<', $file or die "Unable to read $file: $!";
 my @lines = <$fh>;
 close $fh;
@@ -279,7 +290,7 @@ foreach my $line (@lines) {
   if ($in_exec) {
     $has_interactive = 1 if $line =~ /^\s*interactiveMode:\s*/;
     if ($line =~ /^\s*command:\s*(\S+)\s*$/) {
-      $command_aws = 1 if $1 eq 'aws';
+      $command_aws = 1 if $1 eq 'aws' || $1 eq $wrapper;
     }
   }
 
@@ -299,6 +310,111 @@ PERL
   exit 1
 }
 
-ensure_interactive_mode "$kubeconfig_path"
+ensure_interactive_mode "$kubeconfig_path" "$wrapper_path"
 
-echo "Updated kubeconfig exec apiVersion to ${api_version} and ensured interactiveMode in ${kubeconfig_path}."
+ensure_exec_wrapper() {
+  local file="$1"
+  local wrapper="$2"
+
+  if [[ ! -x "$wrapper" ]]; then
+    echo "Exec wrapper not found or not executable: $wrapper"
+    exit 1
+  fi
+
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - <<PY
+from pathlib import Path
+
+path = Path(r"$file")
+data = path.read_text()
+lines = data.splitlines()
+out = []
+
+def indent_len(line: str) -> int:
+    return len(line) - len(line.lstrip(" "))
+
+in_exec = False
+exec_indent = 0
+
+for line in lines:
+    stripped = line.lstrip()
+    if in_exec and stripped and indent_len(line) <= exec_indent:
+        in_exec = False
+        exec_indent = 0
+
+    if not in_exec and stripped.startswith("exec:"):
+        in_exec = True
+        exec_indent = indent_len(line)
+        out.append(line)
+        continue
+
+    if in_exec and stripped.startswith("command:"):
+        value = stripped.split("command:", 1)[1].strip()
+        if value == "aws":
+            line = " " * (exec_indent + 2) + f"command: {r\"$wrapper\"}"
+
+    out.append(line)
+
+path.write_text("\\n".join(out) + ("\\n" if data.endswith("\\n") else ""))
+PY
+    return 0
+  fi
+
+  if command -v perl >/dev/null 2>&1; then
+    perl - <<'PERL' "$file" "$wrapper"
+use strict;
+use warnings;
+
+my $file = shift;
+my $wrapper = shift;
+
+open my $fh, '<', $file or die "Unable to read $file: $!";
+my @lines = <$fh>;
+close $fh;
+
+my @out;
+my ($in_exec, $exec_indent) = (0, 0);
+
+foreach my $line (@lines) {
+  my ($indent) = ($line =~ /^(\s*)/);
+  my $indent_len = length($indent);
+  (my $stripped = $line) =~ s/^\s+//;
+  chomp $stripped;
+
+  if ($in_exec && $stripped ne '' && $indent_len <= $exec_indent) {
+    $in_exec = 0;
+    $exec_indent = 0;
+  }
+
+  if (!$in_exec && $line =~ /^\s*exec:\s*$/) {
+    $in_exec = 1;
+    $exec_indent = $indent_len;
+    push @out, $line;
+    next;
+  }
+
+  if ($in_exec && $line =~ /^\s*command:\s*(\S+)\s*$/) {
+    if ($1 eq 'aws') {
+      $line = (' ' x ($exec_indent + 2)) . "command: $wrapper\n";
+    }
+  }
+
+  push @out, $line;
+}
+
+open my $fh_out, '>', $file or die "Unable to write $file: $!";
+print $fh_out @out;
+close $fh_out;
+PERL
+    return 0
+  fi
+
+  echo "Neither python3 nor perl is available to update kubeconfig."
+  exit 1
+}
+
+if [[ "$use_wrapper" == "true" ]]; then
+  ensure_exec_wrapper "$kubeconfig_path" "$wrapper_path"
+fi
+
+echo "Updated kubeconfig exec apiVersion to ${api_version}, ensured interactiveMode, and set exec wrapper in ${kubeconfig_path}."

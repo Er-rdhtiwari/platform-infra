@@ -66,6 +66,10 @@ pipeline {
           env.TF_BACKEND_ARGS = backendArgs
         }
 
+        withCredentials([file(credentialsId: "tfvars-${ENV}", variable: 'TFVARS')]) {
+          sh 'cp "$TFVARS" envs/${ENV}/terraform.tfvars'
+        }
+
         sh 'terraform fmt -check -recursive'
         sh 'terraform -chdir=envs/${ENV} init $TF_BACKEND_ARGS'
         sh 'terraform -chdir=envs/${ENV} validate'
